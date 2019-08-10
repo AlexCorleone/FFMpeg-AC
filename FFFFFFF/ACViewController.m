@@ -6,10 +6,10 @@
 //  Copyright © 2019年 AlexCorleone. All rights reserved.
 //
 
-#import "ViewController.h"
+#import "ACViewController.h"
 #import "ACViewModel.h"
 
-@interface ViewController ()
+@interface ACViewController ()
 
 /** <#注释#> */
 @property (nonatomic,strong) ACViewModel *viewModel;
@@ -19,7 +19,7 @@
 
 @end
 
-@implementation ViewController
+@implementation ACViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -29,6 +29,7 @@
         [weakSelf.playImageView setImage:resultImage];
     }];
     [self.viewModel testFF];
+    
 }
 
 

@@ -7,24 +7,34 @@
 //
 
 #import "ACViewModel.h"
-
 #import "avformat.h"
 #import "imgutils.h"
 #import "swscale.h"
 #import "avdevice.h"
 #import "rational.h"
 
+#import "ACRenderHelper.h"
+
+
 #define AC_FFmpeg_Log(message) AC_FFmpeg_Logs(message, 0)
 #define AC_FFmpeg_Logs(message, ffCode) NSLog(@"%s %s", message, av_err2str(ffCode));
 
 @interface ACViewModel()
-
+{
+    uint8_t *out_buffer;
+    struct SwsContext *img_convert_ctx;
+}
 /** <#注释#> */
 @property (nonatomic,strong) NSOperationQueue *imageQueue;
+
+/** <#注释#> */
+@property (nonatomic,strong) ACRenderHelper *renderHelper;
 
 @end
 
 @implementation ACViewModel
+
+#pragma mark - LifeCycle
 
 - (instancetype)init {
     self = [super init];
@@ -32,12 +42,20 @@
         self.imageQueue = [[NSOperationQueue alloc] init];
         self.imageQueue.name = @"Alex.ImagePlayQueue";
         self.imageQueue.maxConcurrentOperationCount = 1;
+        __weak typeof(self) weakSelf = self;
+        [self.imageQueue addOperationWithBlock:^{
+            weakSelf.renderHelper = [ACRenderHelper new];
+        }];
     }
     return self;
 }
+- (void)dealloc {
+    
+}
+
+#pragma mark - Private
 
 - (void)testFF {
-
     [self.imageQueue addOperationWithBlock:^{
         [self videoDecoder];
     }];
@@ -50,13 +68,11 @@
     AVCodec *codec = NULL;
     AVCodecContext *codecContext = NULL;
     AVPacket *packet = NULL;
-    AVFrame *pFrameYUV = NULL, *pFrame = NULL;
-    struct SwsContext *img_convert_ctx = NULL;
-    
-    int result, got_picture;
+    AVFrame *pFrameYUV = NULL;
+    AVFrame *pFrameRGBA;
+    int result;
     int video_stream_index;
     int frame_size;
-    uint8_t *out_buffer;
     
     /**********   ************/
     formatContext = avformat_alloc_context();
@@ -121,55 +137,37 @@
     FILE *fp_yuv = fopen(filePath.UTF8String, "wb+");
     
     packet = av_packet_alloc();
-    pFrame = av_frame_alloc();
     pFrameYUV = av_frame_alloc();
+    pFrameRGBA = av_frame_alloc();
+    int frameCount = 0;
     
     //需要转换的图片格式
-    enum AVPixelFormat pixFormat = AV_PIX_FMT_RGBA;
-    size_t bufferSize = av_image_get_buffer_size(pixFormat, codecContext->width, codecContext->height, 1);
+    size_t bufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGBA, codecContext->width, codecContext->height, 1);
     out_buffer = av_malloc(bufferSize);
-    av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, out_buffer, pixFormat, codecContext->width, codecContext->height, 1);
-    img_convert_ctx = sws_getContext(codecContext->width, codecContext->height, codecContext->pix_fmt, codecContext->width, codecContext->height, pixFormat, SWS_BICUBIC, NULL, NULL, NULL);
-    
-    int frameCount = 0;
+    img_convert_ctx = sws_getContext(codecContext->width, codecContext->height, codecContext->pix_fmt, codecContext->width, codecContext->height, AV_PIX_FMT_RGBA, SWS_BICUBIC, NULL, NULL, NULL);
+    pFrameRGBA->width = codecContext->width;
+    pFrameRGBA->height = codecContext->height;
     while (av_read_frame(formatContext, packet) >= 0) {
         if (packet->stream_index == video_stream_index) {
             result = avcodec_send_packet(codecContext, packet);
             if (result == 0) {
-                while (avcodec_receive_frame(codecContext, pFrame) == 0) {
+                while (avcodec_receive_frame(codecContext, pFrameYUV) == 0) {
                     //成功解码一帧
-                    //转换图像格式
-                    sws_scale(img_convert_ctx, (const unsigned char* const*)pFrame->data, pFrame->linesize, 0, codecContext->height,
-                              pFrameYUV->data, pFrameYUV->linesize);
                     frame_size = codecContext->width * codecContext->height;
-                    //                    fwrite(pFrameYUV->data[0], 1, frame_size, fp_yuv);    //Y
-                    //                    fwrite(pFrameYUV->data[1], 1, frame_size / 4, fp_yuv);  //U
-                    //                    fwrite(pFrameYUV->data[2], 1, frame_size / 4, fp_yuv);  //V
-                    
-                    size_t bitsPerComponent = 8;
-                    size_t bitsPerPixel = 32;
-                    size_t bytesPerRow = (4 * codecContext->width);
-                    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
-                    CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedLast;
-                    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
-                    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, pFrameYUV->data[0], bytesPerRow * codecContext->height, NULL);
-                    CGImageRef imageRef = CGImageCreate(codecContext->width, codecContext->height,
-                                                        bitsPerComponent, bitsPerPixel, bytesPerRow,
-                                                        colorSpaceRef, bitmapInfo, provider,
-                                                        NULL, NO, renderingIntent);
-                    
-                    
-                    UIImage *resultImage = [UIImage imageWithCGImage:imageRef];
-                    if (self.frameImageBlock) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            self.frameImageBlock(resultImage);
-                        });
-                    }
-                    CFRelease(imageRef);
-                    CFRelease(provider);
+
+//                   [self swsPixfmtWithSrcPicFrame:pFrameYUV
+//                                         srcPixfmt:codecContext->pix_fmt
+//                                         dstPixfmt:AV_PIX_FMT_RGBA];
+
+                    av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, out_buffer, AV_PIX_FMT_RGBA, codecContext->width, codecContext->height, 1);
+
+                    //转换图像格式
+                    sws_scale(img_convert_ctx, (const unsigned char* const*)pFrameYUV->data, pFrameYUV->linesize, 0, codecContext->height,
+                              pFrameRGBA->data, pFrameRGBA->linesize);
                     
                     if (codecContext->pix_fmt == AV_PIX_FMT_YUV420P) {
-//                        [self sws_scaleFrameWithFrame:yuvframe];
+                        [self videoImageWithFrame:pFrameRGBA];
+
                     } else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ420P) {
                         
                     }
@@ -182,8 +180,10 @@
                     }
                     
                     frameCount++;
-                    [self avframeToRGBFrameWithFrame:pFrame stream_index:frameCount];
+//                    [self avframeToRGBFrameWithFrame:pFrameYUV stream_index:frameCount];
                     NSLog(@"解码绘制第 %d帧s数据", frameCount);
+                    
+
                 }
             }
         }
@@ -194,9 +194,67 @@
     avcodec_free_context(&codecContext);
     av_packet_free(&packet);
     av_frame_free(&pFrameYUV);
-    av_free(out_buffer);
-    fclose(fp_yuv);
+    av_frame_free(&pFrameRGBA);
     av_free(fp_yuv);
+    
+    av_free(out_buffer);
+    av_free(img_convert_ctx);
+}
+
+- (void)swsPixfmtWithSrcPicFrame:(AVFrame *)srcPicFrame
+                       srcPixfmt:(enum AVPixelFormat)src_pix_fmt
+                       dstPixfmt:(enum AVPixelFormat)dst_pix_fmt {
+    
+//    if (srcPicFrame == NULL) {
+//        AC_FFmpeg_Logs("转码格式Frame为空", 0);
+//        return NULL;
+//    }
+//    uint8_t *out_buffer;
+//    struct SwsContext *img_convert_ctx;
+//
+//    AVFrame *dstpFrame = av_frame_alloc();
+//    int srcWidth = srcPicFrame->width, srcHeight = srcPicFrame->height;
+//    dstpFrame->width = srcWidth;
+//    dstpFrame->height = srcHeight;
+//
+//    //需要转换的图片格式
+//    size_t bufferSize = av_image_get_buffer_size(dst_pix_fmt, srcWidth, srcHeight, 1);
+//    out_buffer = av_malloc(bufferSize);
+//    av_image_fill_arrays(dstpFrame->data, dstpFrame->linesize, out_buffer, dst_pix_fmt, srcWidth, srcHeight, 1);
+//    img_convert_ctx = sws_getContext(srcWidth, srcHeight, src_pix_fmt, srcWidth, srcHeight, dst_pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
+//
+//    //转换图像格式
+//    sws_scale(img_convert_ctx, (const unsigned char* const*)srcPicFrame->data, srcPicFrame->linesize, 0, srcHeight,
+//              dstpFrame->data, dstpFrame->linesize);
+//
+//    av_free(out_buffer);
+//    av_free(img_convert_ctx);
+}
+
+- (void)videoImageWithFrame:(AVFrame *)pFrameRGBA {
+    size_t bitsPerComponent = 8;
+    size_t bitsPerPixel = 32;
+    size_t bytesPerRow = (4 * pFrameRGBA->width);
+    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedLast;
+    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, pFrameRGBA->data[0], bytesPerRow * pFrameRGBA->height, NULL);
+    CGImageRef imageRef = CGImageCreate(pFrameRGBA->width, pFrameRGBA->height,
+                                        bitsPerComponent, bitsPerPixel, bytesPerRow,
+                                        colorSpaceRef, bitmapInfo, provider,
+                                        NULL, NO, renderingIntent);
+    
+    
+    UIImage *resultImage = [UIImage imageWithCGImage:imageRef];
+
+    if (self.frameImageBlock) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.frameImageBlock(resultImage);
+
+        });
+    }
+    CGImageRelease(imageRef);
+    CGDataProviderRelease(provider);
 }
 
 - (void)avframeToRGBFrameWithFrame:(AVFrame *)frame stream_index:(unsigned int)stream_index {
@@ -449,3 +507,8 @@ codecSendError:
 //    src[i + data0_len + data1_len] = data2[i];
 //    i++;
 //    }
+
+
+//                    fwrite(pFrameYUV->data[0], 1, frame_size, fp_yuv);    //Y
+//                    fwrite(pFrameYUV->data[1], 1, frame_size / 4, fp_yuv);  //U
+//                    fwrite(pFrameYUV->data[2], 1, frame_size / 4, fp_yuv);  //V

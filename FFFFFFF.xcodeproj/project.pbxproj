@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		19BF9C8B22E85270008040A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BF9C8A22E85270008040A0 /* AppDelegate.m */; };
-		19BF9C8E22E85271008040A0 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BF9C8D22E85271008040A0 /* ViewController.m */; };
+		19BF9C8B22E85270008040A0 /* ACAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BF9C8A22E85270008040A0 /* ACAppDelegate.m */; };
+		19BF9C8E22E85271008040A0 /* ACViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BF9C8D22E85271008040A0 /* ACViewController.m */; };
 		19BF9C9122E85271008040A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 19BF9C8F22E85271008040A0 /* Main.storyboard */; };
 		19BF9C9322E85272008040A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 19BF9C9222E85272008040A0 /* Assets.xcassets */; };
 		19BF9C9622E85272008040A0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 19BF9C9422E85272008040A0 /* LaunchScreen.storyboard */; };
@@ -30,15 +30,17 @@
 		19BF9DBF22E934CA008040A0 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19BF9DB822E934CA008040A0 /* libswscale.a */; };
 		19BF9DC122E934FD008040A0 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 19BF9DC022E934FD008040A0 /* AVFoundation.framework */; };
 		19BF9DC322E99747008040A0 /* video111.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 19BF9DC222E99747008040A0 /* video111.mp4 */; };
+		19F5205A22F2D34C00083D43 /* ACOpenGLRenderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 19F5205922F2D34C00083D43 /* ACOpenGLRenderView.m */; };
+		19F5205D22F2D40200083D43 /* ACRenderHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 19F5205C22F2D40200083D43 /* ACRenderHelper.m */; };
 		1EE4BCC5FD20227ACF1219CF /* libPods-FFFFFFF.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C7893FC7DA45374CF007D930 /* libPods-FFFFFFF.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		19BF9C8622E85270008040A0 /* FFFFFFF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FFFFFFF.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		19BF9C8922E85270008040A0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		19BF9C8A22E85270008040A0 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		19BF9C8C22E85270008040A0 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		19BF9C8D22E85271008040A0 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		19BF9C8922E85270008040A0 /* ACAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACAppDelegate.h; sourceTree = "<group>"; };
+		19BF9C8A22E85270008040A0 /* ACAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ACAppDelegate.m; sourceTree = "<group>"; };
+		19BF9C8C22E85270008040A0 /* ACViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACViewController.h; sourceTree = "<group>"; };
+		19BF9C8D22E85271008040A0 /* ACViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ACViewController.m; sourceTree = "<group>"; };
 		19BF9C9022E85271008040A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		19BF9C9222E85272008040A0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		19BF9C9522E85272008040A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -173,6 +175,10 @@
 		19BF9DB822E934CA008040A0 /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libswscale.a; sourceTree = "<group>"; };
 		19BF9DC022E934FD008040A0 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		19BF9DC222E99747008040A0 /* video111.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video111.mp4; sourceTree = "<group>"; };
+		19F5205822F2D34C00083D43 /* ACOpenGLRenderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACOpenGLRenderView.h; sourceTree = "<group>"; };
+		19F5205922F2D34C00083D43 /* ACOpenGLRenderView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ACOpenGLRenderView.m; sourceTree = "<group>"; };
+		19F5205B22F2D40200083D43 /* ACRenderHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACRenderHelper.h; sourceTree = "<group>"; };
+		19F5205C22F2D40200083D43 /* ACRenderHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ACRenderHelper.m; sourceTree = "<group>"; };
 		35021FF19CB7A0FBEC67E1B4 /* Pods-FFFFFFF.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FFFFFFF.release.xcconfig"; path = "Pods/Target Support Files/Pods-FFFFFFF/Pods-FFFFFFF.release.xcconfig"; sourceTree = "<group>"; };
 		BA9651253C4BEAD8ABBE3263 /* Pods-FFFFFFF.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FFFFFFF.debug.xcconfig"; path = "Pods/Target Support Files/Pods-FFFFFFF/Pods-FFFFFFF.debug.xcconfig"; sourceTree = "<group>"; };
 		C7893FC7DA45374CF007D930 /* libPods-FFFFFFF.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FFFFFFF.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -228,12 +234,16 @@
 				19BF9DC222E99747008040A0 /* video111.mp4 */,
 				19BF9D3722E85FB4008040A0 /* video.mp4 */,
 				19BF9D3922E934CA008040A0 /* FFmpeg-iOS */,
-				19BF9C8922E85270008040A0 /* AppDelegate.h */,
-				19BF9C8A22E85270008040A0 /* AppDelegate.m */,
-				19BF9C8C22E85270008040A0 /* ViewController.h */,
-				19BF9C8D22E85271008040A0 /* ViewController.m */,
+				19BF9C8922E85270008040A0 /* ACAppDelegate.h */,
+				19BF9C8A22E85270008040A0 /* ACAppDelegate.m */,
+				19BF9C8C22E85270008040A0 /* ACViewController.h */,
+				19BF9C8D22E85271008040A0 /* ACViewController.m */,
 				19BF9D2622E85411008040A0 /* ACViewModel.h */,
 				19BF9D2722E85411008040A0 /* ACViewModel.m */,
+				19F5205822F2D34C00083D43 /* ACOpenGLRenderView.h */,
+				19F5205922F2D34C00083D43 /* ACOpenGLRenderView.m */,
+				19F5205B22F2D40200083D43 /* ACRenderHelper.h */,
+				19F5205C22F2D40200083D43 /* ACRenderHelper.m */,
 				19BF9C8F22E85271008040A0 /* Main.storyboard */,
 				19BF9C9222E85272008040A0 /* Assets.xcassets */,
 				19BF9C9422E85272008040A0 /* LaunchScreen.storyboard */,
@@ -563,9 +573,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				19BF9D2822E85411008040A0 /* ACViewModel.m in Sources */,
-				19BF9C8E22E85271008040A0 /* ViewController.m in Sources */,
+				19BF9C8E22E85271008040A0 /* ACViewController.m in Sources */,
+				19F5205A22F2D34C00083D43 /* ACOpenGLRenderView.m in Sources */,
+				19F5205D22F2D40200083D43 /* ACRenderHelper.m in Sources */,
 				19BF9C9922E85272008040A0 /* main.m in Sources */,
-				19BF9C8B22E85270008040A0 /* AppDelegate.m in Sources */,
+				19BF9C8B22E85270008040A0 /* ACAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
