@@ -8,12 +8,15 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-
+#import "ACRenderHelper.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ACViewModel : NSObject
 
 - (void)testFF;
+
+/** <#注释#> */
+@property (nonatomic,strong) ACRenderHelper *renderHelper;
 
 @property (nonatomic, copy) void (^frameImageBlock)(UIImage *resultImage);
 

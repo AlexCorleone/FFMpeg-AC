@@ -23,12 +23,31 @@
 {
     uint8_t *out_buffer;
     struct SwsContext *img_convert_ctx;
-}
-/** <#注释#> */
-@property (nonatomic,strong) NSOperationQueue *imageQueue;
+    
+    //displayLink
+    AVFormatContext *formatContext;
 
+
+    AVCodecContext *codecContext;
+    AVPacket *packet;
+    AVFrame *pFrameYUV;
+    AVFrame *pFrameRGBA;
+    
+    AVCodecParameters *videoCodecParameters;
+    AVCodec *videoCodec;
+    int video_stream_index;
+    
+    AVCodecParameters *audioCodecParameters;
+    AVCodec *audioCodec;
+    int audio_stream_index;
+    
+    int result;
+    int frameCount;
+}
+/**  */
+@property (nonatomic,strong) NSOperationQueue *imageQueue;
 /** <#注释#> */
-@property (nonatomic,strong) ACRenderHelper *renderHelper;
+@property (nonatomic, strong) CADisplayLink *timer;
 
 @end
 
@@ -41,7 +60,7 @@
     if (self) {
         self.imageQueue = [[NSOperationQueue alloc] init];
         self.imageQueue.name = @"Alex.ImagePlayQueue";
-        self.imageQueue.maxConcurrentOperationCount = 1;
+//        self.imageQueue.maxConcurrentOperationCount = 1;
         __weak typeof(self) weakSelf = self;
         [self.imageQueue addOperationWithBlock:^{
             weakSelf.renderHelper = [ACRenderHelper new];
@@ -57,23 +76,60 @@
 
 - (void)testFF {
     [self.imageQueue addOperationWithBlock:^{
-        [self videoDecoder];
+        [self initFormatContext];
+        [self initVideoDecoder];
+        self.timer = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayLinkTimerAction:)];
+        [self.timer addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+        [[NSRunLoop currentRunLoop] run];
     }];
 }
 
-- (void)videoDecoder {
-    
-    AVFormatContext *formatContext = NULL;
-    AVCodecParameters *codecParameters = NULL;
-    AVCodec *codec = NULL;
-    AVCodecContext *codecContext = NULL;
-    AVPacket *packet = NULL;
-    AVFrame *pFrameYUV = NULL;
-    AVFrame *pFrameRGBA;
-    int result;
-    int video_stream_index;
-    int frame_size;
-    
+- (void)displayLinkTimerAction:(CADisplayLink *)timer {
+    if (av_read_frame(formatContext, packet) < 0) {
+        //读取结束
+        avformat_close_input(&formatContext);
+        avcodec_close(codecContext);
+        avcodec_free_context(&codecContext);
+        av_packet_free(&packet);
+        av_frame_free(&pFrameYUV);
+        av_frame_free(&pFrameRGBA);
+        
+        av_free(out_buffer);
+        av_free(img_convert_ctx);
+        [self.timer invalidate];
+        self.timer = nil;
+        frameCount = 0;
+        return;
+    }
+
+    if (packet->stream_index == video_stream_index) {
+        result = avcodec_send_packet(codecContext, packet);
+        if (result == 0) {
+            result = avcodec_receive_frame(codecContext, pFrameYUV);
+//            while (avcodec_receive_frame(codecContext, pFrameYUV) == 0) {
+            av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, out_buffer, AV_PIX_FMT_RGBA, codecContext->width, codecContext->height, 1);
+                //转换图像格式
+            sws_scale(img_convert_ctx, (const unsigned char* const*)pFrameYUV->data, pFrameYUV->linesize, 0, codecContext->height,
+                   pFrameRGBA->data, pFrameRGBA->linesize);
+
+                if (codecContext->pix_fmt == AV_PIX_FMT_YUV420P) {
+                    [self videoImageWithFrame:pFrameRGBA];
+                }
+                if (pFrameYUV->pict_type == AV_PICTURE_TYPE_I) {
+                    AC_FFmpeg_Log("IIIIIIIIIIIIII帧")
+                } else if (pFrameYUV->pict_type == AV_PICTURE_TYPE_P) {
+                    AC_FFmpeg_Log("PPPPPPPPPPPPPP帧")
+                } else if (pFrameYUV->pict_type == AV_PICTURE_TYPE_B) {
+                    AC_FFmpeg_Log("BBBBBBBBBBBBBB帧")
+                }
+                frameCount++;
+                NSLog(@"解码绘制第 %d帧s数据", frameCount);
+//            }
+        }
+    }
+}
+
+- (void)initFormatContext {
     /**********   ************/
     formatContext = avformat_alloc_context();
     
@@ -85,61 +141,62 @@
         AC_FFmpeg_Logs("file open error!!! ", result)
         return ;
     }
-    
     NSLog(@"打开资源文件");
+}
+
+- (void)initVideoDecoder {
     /**********   ************/
     result = avformat_find_stream_info(formatContext, NULL);
     if (result < 0) {
         AC_FFmpeg_Logs("find stream info error!!!", result)
         return ;
     }
-    
     NSLog(@"获取到 视频文件信息");
     /**********   ************/
     video_stream_index = -1;
+    audio_stream_index = -1;
     for (int i = 0; i < formatContext->nb_streams; i++) {
-        //流的类型 codec_type 区分是是视频流、音频流或者其他附加数据
+        enum AVMediaType codeType = formatContext->streams[i]->codecpar->codec_type;
+        NSLog(@"code_type: %@", @(codeType));
+        //流的类型 codec_type 区分是视频流、音频流或者其他附加数据
         if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             video_stream_index = i;
-            break;
+        }
+        if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audio_stream_index = i;
         }
     }
+    NSLog(@"video_stream_index: %d audio_stream_index: %d", video_stream_index, audio_stream_index);
     if (video_stream_index == -1) {
         AC_FFmpeg_Log("video stream find error")
-
         return;
     }
-    
     NSLog(@"获取到 video stream");
     /**********   ************/
-    codecParameters = formatContext->streams[video_stream_index]->codecpar;
-    codec = avcodec_find_decoder(codecParameters->codec_id);
-    if (codec == NULL) {
-        AC_FFmpeg_Log("avcodec cannot find error")
-
+    videoCodecParameters = formatContext->streams[video_stream_index]->codecpar;
+    audioCodecParameters = formatContext->streams[audio_stream_index]->codecpar;
+    videoCodec = avcodec_find_decoder(videoCodecParameters->codec_id);
+    if (videoCodec == NULL) {
+        AC_FFmpeg_Log("avcodec cannot find video decoder error")
         return;
     }
-    
     NSLog(@"获取到 解码器");
     /**********   ************/
-    codecContext = avcodec_alloc_context3(codec);
-    avcodec_parameters_to_context(codecContext, codecParameters);
-    result = avcodec_open2(codecContext, codec, NULL);
+    codecContext = avcodec_alloc_context3(videoCodec);
+    avcodec_parameters_to_context(codecContext, videoCodecParameters);
+    result = avcodec_open2(codecContext, videoCodec, NULL);
     
     if (result < 0) {
         AC_FFmpeg_Logs("avcodec cannot open error ", result)
-
         return;
     }
     NSLog(@"打开 解码器");
     
-    NSString *filePath = [self filePath];
-    FILE *fp_yuv = fopen(filePath.UTF8String, "wb+");
-    
-    packet = av_packet_alloc();
+    if (packet == NULL) {
+        packet = av_packet_alloc();
+    }
     pFrameYUV = av_frame_alloc();
     pFrameRGBA = av_frame_alloc();
-    int frameCount = 0;
     
     //需要转换的图片格式
     size_t bufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGBA, codecContext->width, codecContext->height, 1);
@@ -147,93 +204,20 @@
     img_convert_ctx = sws_getContext(codecContext->width, codecContext->height, codecContext->pix_fmt, codecContext->width, codecContext->height, AV_PIX_FMT_RGBA, SWS_BICUBIC, NULL, NULL, NULL);
     pFrameRGBA->width = codecContext->width;
     pFrameRGBA->height = codecContext->height;
-    while (av_read_frame(formatContext, packet) >= 0) {
-        if (packet->stream_index == video_stream_index) {
-            result = avcodec_send_packet(codecContext, packet);
-            if (result == 0) {
-                while (avcodec_receive_frame(codecContext, pFrameYUV) == 0) {
-                    //成功解码一帧
-                    frame_size = codecContext->width * codecContext->height;
-
-//                   [self swsPixfmtWithSrcPicFrame:pFrameYUV
-//                                         srcPixfmt:codecContext->pix_fmt
-//                                         dstPixfmt:AV_PIX_FMT_RGBA];
-
-                    av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, out_buffer, AV_PIX_FMT_RGBA, codecContext->width, codecContext->height, 1);
-
-                    //转换图像格式
-                    sws_scale(img_convert_ctx, (const unsigned char* const*)pFrameYUV->data, pFrameYUV->linesize, 0, codecContext->height,
-                              pFrameRGBA->data, pFrameRGBA->linesize);
-                    
-                    if (codecContext->pix_fmt == AV_PIX_FMT_YUV420P) {
-                        [self videoImageWithFrame:pFrameRGBA];
-
-                    } else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ420P) {
-                        
-                    }
-                    if (pFrameYUV->pict_type == AV_PICTURE_TYPE_I) {
-                        AC_FFmpeg_Log("IIIIIIIIIIIIII帧")
-                    } else if (pFrameYUV->pict_type == AV_PICTURE_TYPE_P) {
-                        AC_FFmpeg_Log("PPPPPPPPPPPPPP帧")
-                    } else if (pFrameYUV->pict_type == AV_PICTURE_TYPE_B) {
-                        AC_FFmpeg_Log("BBBBBBBBBBBBBB帧")
-                    }
-                    
-                    frameCount++;
-//                    [self avframeToRGBFrameWithFrame:pFrameYUV stream_index:frameCount];
-                    NSLog(@"解码绘制第 %d帧s数据", frameCount);
-                    
-
-                }
-            }
-        }
-    }
     
-    avformat_close_input(&formatContext);
-    avcodec_close(codecContext);
-    avcodec_free_context(&codecContext);
-    av_packet_free(&packet);
-    av_frame_free(&pFrameYUV);
-    av_frame_free(&pFrameRGBA);
-    av_free(fp_yuv);
-    
-    av_free(out_buffer);
-    av_free(img_convert_ctx);
+//  NSString *filePath = [self filePath];
+//  FILE *fp_yuv = fopen(filePath.UTF8String, "wb+");
+//  av_free(fp_yuv);
 }
 
-- (void)swsPixfmtWithSrcPicFrame:(AVFrame *)srcPicFrame
-                       srcPixfmt:(enum AVPixelFormat)src_pix_fmt
-                       dstPixfmt:(enum AVPixelFormat)dst_pix_fmt {
+- (void)initAudioDecoder {
     
-//    if (srcPicFrame == NULL) {
-//        AC_FFmpeg_Logs("转码格式Frame为空", 0);
-//        return NULL;
-//    }
-//    uint8_t *out_buffer;
-//    struct SwsContext *img_convert_ctx;
-//
-//    AVFrame *dstpFrame = av_frame_alloc();
-//    int srcWidth = srcPicFrame->width, srcHeight = srcPicFrame->height;
-//    dstpFrame->width = srcWidth;
-//    dstpFrame->height = srcHeight;
-//
-//    //需要转换的图片格式
-//    size_t bufferSize = av_image_get_buffer_size(dst_pix_fmt, srcWidth, srcHeight, 1);
-//    out_buffer = av_malloc(bufferSize);
-//    av_image_fill_arrays(dstpFrame->data, dstpFrame->linesize, out_buffer, dst_pix_fmt, srcWidth, srcHeight, 1);
-//    img_convert_ctx = sws_getContext(srcWidth, srcHeight, src_pix_fmt, srcWidth, srcHeight, dst_pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
-//
-//    //转换图像格式
-//    sws_scale(img_convert_ctx, (const unsigned char* const*)srcPicFrame->data, srcPicFrame->linesize, 0, srcHeight,
-//              dstpFrame->data, dstpFrame->linesize);
-//
-//    av_free(out_buffer);
-//    av_free(img_convert_ctx);
 }
+
 
 - (void)videoImageWithFrame:(AVFrame *)pFrameRGBA {
-    size_t bitsPerComponent = 8;
-    size_t bitsPerPixel = 32;
+    size_t bitsPerComponent = 8;//颜色分量字节大小
+    size_t bitsPerPixel = 32; //一个RGBA颜色值存储的字节大小
     size_t bytesPerRow = (4 * pFrameRGBA->width);
     CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
     CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedLast;
@@ -244,9 +228,7 @@
                                         colorSpaceRef, bitmapInfo, provider,
                                         NULL, NO, renderingIntent);
     
-    
     UIImage *resultImage = [UIImage imageWithCGImage:imageRef];
-
     if (self.frameImageBlock) {
         dispatch_async(dispatch_get_main_queue(), ^{
             self.frameImageBlock(resultImage);
@@ -256,6 +238,7 @@
     CGImageRelease(imageRef);
     CGDataProviderRelease(provider);
 }
+
 
 - (void)avframeToRGBFrameWithFrame:(AVFrame *)frame stream_index:(unsigned int)stream_index {
     
@@ -416,27 +399,6 @@ codecSendError:
     //
     //    }
     //    NSLog(@"\n\n");
-}
-
-- (void)sws_scaleFrameWithFrame:(AVFrame *)yuvframe {
-
-    int width = yuvframe->width;
-    int height = yuvframe->height;
-    AVFrame *rgbFrame = av_frame_alloc();
-    rgbFrame->width = width;
-    rgbFrame->height = height;
-    rgbFrame->format = AV_PIX_FMT_RGBA;
-    
-    uint8_t *dataY = yuvframe->data[0];
-    uint8_t *dataU = yuvframe->data[1];
-    uint8_t *dataV = yuvframe->data[2];
-    struct SwsContext *sws_context;
-    sws_context = sws_getContext(width, height, AV_PIX_FMT_YUV420P, width * 1.5, height * 1.5, AV_PIX_FMT_RGBA, 0, NULL, NULL, NULL);
-    
-//    uint8_t *const sca_dst[8];
-//    const int sca_dstStride[8];
-//    const uint8_t *dsts = {dataY, dataU, dataV, 0};
-//    sws_scale(sws_context, <#const uint8_t *const *srcSlice#>, <#const int *srcStride#>, <#int srcSliceY#>, <#int srcSliceH#>, <#uint8_t *const *dst#>, <#const int *dstStride#>);
 }
 
 - (NSString *)filePath {

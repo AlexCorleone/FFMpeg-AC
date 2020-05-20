@@ -1,45 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Bucket
+   uuid = "D389BD64-C2DF-4F58-95A3-7CAE325A7BD7"
    type = "0"
    version = "2.0">
    <Breakpoints>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            scope = "0"
-            stopOnStyle = "0">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.OpenGLErrorBreakpoint">
-         <BreakpointContent
+            uuid = "D160E967-4F60-4C1A-9C26-391A2D81B12D"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             breakpointStackSelectionBehavior = "1"
-            symbolName = "__GPUTOOLS_HAS_DETECTED_AN_OPENGL_ERROR__"
-            moduleName = "libglInterpose.dylib">
-            <Actions>
-               <BreakpointActionProxy
-                  ActionExtensionID = "Xcode.BreakpointAction.OpenGLError">
-                  <ActionContent>
-                  </ActionContent>
-               </BreakpointActionProxy>
-            </Actions>
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__clang_call_terminate"
-                  moduleName = "libglInterpose.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  offsetFromSymbolStart = "13688">
-               </Location>
-            </Locations>
+            scope = "1"
+            stopOnStyle = "0">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
