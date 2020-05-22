@@ -26,10 +26,11 @@
     self.viewModel = [ACViewModel new];
     __weak typeof(self)weakSelf = self;
     [self.viewModel setFrameImageBlock:^(UIImage * _Nonnull resultImage) {
+        CGFloat ratio = resultImage.size.width > [UIScreen mainScreen].bounds.size.width ? [UIScreen mainScreen].bounds.size.width / resultImage.size.width : 1.0;
+        weakSelf.playImageView.bounds = CGRectMake(0, 0, ratio * resultImage.size.width, ratio * resultImage.size.height);
         [weakSelf.playImageView setImage:resultImage];
     }];
     [self.viewModel testFF];
-    
 }
 
 
@@ -38,7 +39,7 @@
 - (UIImageView *)playImageView {
     if (!_playImageView) {
         self.playImageView = [UIImageView new];
-        [_playImageView setFrame:self.view.bounds];
+        [_playImageView setCenter:self.view.center];
         _playImageView.userInteractionEnabled = YES;
         [self.view addSubview:_playImageView];
         [_playImageView setBackgroundColor:UIColor.lightGrayColor];

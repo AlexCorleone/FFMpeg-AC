@@ -13,12 +13,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ACViewModel : NSObject
 
-- (void)testFF;
-
 /** <#注释#> */
 @property (nonatomic,strong) ACRenderHelper *renderHelper;
-
 @property (nonatomic, copy) void (^frameImageBlock)(UIImage *resultImage);
+
+- (void)testFF;
 
 @end
 

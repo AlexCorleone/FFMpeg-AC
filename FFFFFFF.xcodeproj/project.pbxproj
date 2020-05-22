@@ -30,6 +30,7 @@
 		19BF9DBF22E934CA008040A0 /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19BF9DB822E934CA008040A0 /* libswscale.a */; };
 		19BF9DC122E934FD008040A0 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 19BF9DC022E934FD008040A0 /* AVFoundation.framework */; };
 		19BF9DC322E99747008040A0 /* video111.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 19BF9DC222E99747008040A0 /* video111.mp4 */; };
+		19ED51A624765D85001D1715 /* video222.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 19ED51A524765D85001D1715 /* video222.mp4 */; };
 		19F5205A22F2D34C00083D43 /* ACOpenGLRenderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 19F5205922F2D34C00083D43 /* ACOpenGLRenderView.m */; };
 		19F5205D22F2D40200083D43 /* ACRenderHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 19F5205C22F2D40200083D43 /* ACRenderHelper.m */; };
 		1EE4BCC5FD20227ACF1219CF /* libPods-FFFFFFF.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C7893FC7DA45374CF007D930 /* libPods-FFFFFFF.a */; };
@@ -175,6 +176,7 @@
 		19BF9DB822E934CA008040A0 /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libswscale.a; sourceTree = "<group>"; };
 		19BF9DC022E934FD008040A0 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		19BF9DC222E99747008040A0 /* video111.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video111.mp4; sourceTree = "<group>"; };
+		19ED51A524765D85001D1715 /* video222.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video222.mp4; sourceTree = "<group>"; };
 		19F5205822F2D34C00083D43 /* ACOpenGLRenderView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACOpenGLRenderView.h; sourceTree = "<group>"; };
 		19F5205922F2D34C00083D43 /* ACOpenGLRenderView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ACOpenGLRenderView.m; sourceTree = "<group>"; };
 		19F5205B22F2D40200083D43 /* ACRenderHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ACRenderHelper.h; sourceTree = "<group>"; };
@@ -231,6 +233,7 @@
 		19BF9C8822E85270008040A0 /* FFFFFFF */ = {
 			isa = PBXGroup;
 			children = (
+				19ED51A524765D85001D1715 /* video222.mp4 */,
 				19BF9DC222E99747008040A0 /* video111.mp4 */,
 				19BF9D3722E85FB4008040A0 /* video.mp4 */,
 				19BF9D3922E934CA008040A0 /* FFmpeg-iOS */,
@@ -536,6 +539,7 @@
 				19BF9C9622E85272008040A0 /* LaunchScreen.storyboard in Resources */,
 				19BF9C9322E85272008040A0 /* Assets.xcassets in Resources */,
 				19BF9C9122E85271008040A0 /* Main.storyboard in Resources */,
+				19ED51A624765D85001D1715 /* video222.mp4 in Resources */,
 				19BF9D3822E85FB4008040A0 /* video.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
