@@ -17,7 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic,strong) ACRenderHelper *renderHelper;
 @property (nonatomic, copy) void (^frameImageBlock)(UIImage *resultImage);
 
-- (void)testFF;
+- (void)play;
+- (void)pause;
 
 @end
 

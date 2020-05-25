@@ -45,11 +45,17 @@
     
     int result;
     int frameCount;
+    
+    NSTimeInterval _videoTime;
+    NSTimeInterval _audioTime;
 }
 /**  */
 @property (nonatomic,strong) NSOperationQueue *imageQueue;
 /** displayLink */
 @property (nonatomic, strong) CADisplayLink *timer;
+//资源信息
+/** <#注释#> */
+@property (nonatomic, assign, readonly) NSTimeInterval duration;
 
 @end
 
@@ -65,6 +71,7 @@
 //        self.imageQueue.maxConcurrentOperationCount = 1;
         __weak typeof(self) weakSelf = self;
         weakSelf.renderHelper = [ACRenderHelper new];
+        [self play];
     }
     return self;
 }
@@ -72,9 +79,9 @@
     
 }
 
-#pragma mark - Private
+#pragma mark - Public
 
-- (void)testFF {
+- (void)play {
     [self.imageQueue addOperationWithBlock:^{
         [self clearVideoData];
         [self initFormatContext];
@@ -83,22 +90,36 @@
         self.timer = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayLinkTimerAction:)];
         [self.timer addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
         [[NSRunLoop currentRunLoop] run];
+        dispatch_after(0.5, dispatch_get_main_queue(), ^{
+            [self pause];
+        });
     }];
+
 }
 
+- (void)pause {
+    [self.imageQueue cancelAllOperations];
+}
+
+
+#pragma mark - Private
+
+
 - (void)clearVideoData {
+    [self.timer invalidate];
+    self.timer = nil;
+    frameCount = 0;
+    
     avformat_close_input(&formatContext);
     avcodec_close(videoCodecContext);
     avcodec_free_context(&videoCodecContext);
     av_packet_free(&videoPacket);
     av_frame_free(&pFrameYUV);
     av_frame_free(&pFrameRGBA);
-    
     av_free(out_buffer);
+    out_buffer = NULL;
     av_free(img_convert_ctx);
-    [self.timer invalidate];
-    self.timer = nil;
-    frameCount = 0;
+    img_convert_ctx = NULL;
 }
 
 - (void)displayLinkTimerAction:(CADisplayLink *)timer {
@@ -112,7 +133,6 @@
         result = avcodec_send_packet(videoCodecContext, videoPacket);
         if (result == 0) {
             result = avcodec_receive_frame(videoCodecContext, pFrameYUV);
-            
             enum AVPixelFormat dst_pix_fmt = AV_PIX_FMT_RGBA;
             av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, out_buffer, dst_pix_fmt, videoCodecContext->width, videoCodecContext->height, 1);
             //转换图像格式
@@ -145,7 +165,7 @@
     /********** 初始化视频I/O上下文  ************/
     formatContext = avformat_alloc_context();
     /********** 指定上下文资源  ************/
-    NSString *video = [[NSBundle mainBundle] pathForResource:@"video" ofType:@"mp4"];
+    NSString *video = [[NSBundle mainBundle] pathForResource:@"videoh265" ofType:@"mp4"];
     const char *fileUrl = [video cStringUsingEncoding:NSUTF8StringEncoding];
     AVInputFormat *inputFormat = NULL;
     AVDictionary *options = NULL;
@@ -156,7 +176,7 @@
     }
     NSLog(@"打开资源文件");
     /**********   ************/
-    result = avformat_find_stream_info(formatContext, NULL);
+    result = avformat_find_stream_info(formatContext, options);
     if (result < 0) {
         AC_FFmpeg_Logs("find stream info error!!!", result)
         return ;
@@ -173,6 +193,9 @@
         //流的类型 codec_type 区分是视频流、音频流或者其他附加数据
         if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             video_stream_index = i;
+            AVStream *stream = formatContext->streams[video_stream_index];
+            _videoTime = (NSTimeInterval)(stream->duration * stream->time_base.num / stream->time_base.den);
+            NSLog(@"videoStreamInfo duration: %lld time_base.num: %d stream->time_base.den: %d", stream->duration, stream->time_base.num, stream->time_base.den);
         }
     }
     NSLog(@"video_stream_index: %d", video_stream_index);
@@ -221,7 +244,11 @@
         //流的类型 codec_type 区分是视频流、音频流或者其他附加数据
         if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             audio_stream_index = i;
+            AVStream *stream = formatContext->streams[audio_stream_index];
+            _audioTime = (NSTimeInterval)(stream->duration * stream->time_base.num / stream->time_base.den);
+            NSLog(@"audioStreamInfo duration: %lld time_base.num: %d stream->time_base.den: %d", stream->duration, stream->time_base.num, stream->time_base.den);
         }
+
     }
     NSLog(@"audio_stream_index: %d", audio_stream_index);
     if (audio_stream_index == -1) {
@@ -251,6 +278,7 @@
 
 
 - (void)videoImageWithFrame:(AVFrame *)pFrameRGBA {
+    NSLog(@"-------------------------video frame pts: %lld dts: %lld", videoPacket->pts, videoPacket->dts);
     size_t bitsPerComponent = 8;//颜色分量字节大小
     size_t bitsPerPixel = 32; //一个RGBA颜色值存储的字节大小
     size_t bytesPerRow = (4 * pFrameRGBA->width);
@@ -275,7 +303,7 @@
 }
 
 - (void)audioDataWithFrame:(AVFrame *)audioFrame {
-    
+    NSLog(@"-------------------------audio frame");
 }
 
 
@@ -480,6 +508,13 @@ codecSendError:
     return nil;
 }
 
+
+#pragma mark - Setter && Getter
+
+- (NSTimeInterval)duration {
+    return _videoTime > _audioTime ? _videoTime : _audioTime;
+}
+
 @end
 
 
@@ -513,3 +548,7 @@ codecSendError:
 //                    fwrite(pFrameYUV->data[0], 1, frame_size, fp_yuv);    //Y
 //                    fwrite(pFrameYUV->data[1], 1, frame_size / 4, fp_yuv);  //U
 //                    fwrite(pFrameYUV->data[2], 1, frame_size / 4, fp_yuv);  //V
+
+
+
+
