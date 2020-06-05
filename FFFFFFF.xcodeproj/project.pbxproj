@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		190A023E2488A6DF003CD799 /* main.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 190A023D2488A6DE003CD799 /* main.mp4 */; };
+		190A02D6248A3452003CD799 /* 1591344158121590.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 190A02D5248A3451003CD799 /* 1591344158121590.mp4 */; };
 		19895BEE247CEE8900123F3D /* ASValuePopUpView.m in Sources */ = {isa = PBXBuildFile; fileRef = 19895BEC247CEE8900123F3D /* ASValuePopUpView.m */; };
 		19895BEF247CEE8900123F3D /* ASValueTrackingSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = 19895BED247CEE8900123F3D /* ASValueTrackingSlider.m */; };
 		19BF9C8B22E85270008040A0 /* ACAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 19BF9C8A22E85270008040A0 /* ACAppDelegate.m */; };
@@ -40,6 +42,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		190A023D2488A6DE003CD799 /* main.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = main.mp4; sourceTree = "<group>"; };
+		190A02D5248A3451003CD799 /* 1591344158121590.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = 1591344158121590.mp4; sourceTree = "<group>"; };
 		19895BEA247CEE8900123F3D /* ASValuePopUpView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASValuePopUpView.h; sourceTree = "<group>"; };
 		19895BEB247CEE8900123F3D /* ASValueTrackingSlider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASValueTrackingSlider.h; sourceTree = "<group>"; };
 		19895BEC247CEE8900123F3D /* ASValuePopUpView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASValuePopUpView.m; sourceTree = "<group>"; };
@@ -254,6 +258,8 @@
 		19BF9C8822E85270008040A0 /* FFFFFFF */ = {
 			isa = PBXGroup;
 			children = (
+				190A02D5248A3451003CD799 /* 1591344158121590.mp4 */,
+				190A023D2488A6DE003CD799 /* main.mp4 */,
 				19ED51A524765D85001D1715 /* video222.mp4 */,
 				19BF9DC222E99747008040A0 /* video111.mp4 */,
 				19C3EEB8247BAC8800FB4A24 /* videoh265.mp4 */,
@@ -563,7 +569,9 @@
 				19BF9DC322E99747008040A0 /* video111.mp4 in Resources */,
 				19BF9C9622E85272008040A0 /* LaunchScreen.storyboard in Resources */,
 				19BF9C9322E85272008040A0 /* Assets.xcassets in Resources */,
+				190A02D6248A3452003CD799 /* 1591344158121590.mp4 in Resources */,
 				19BF9C9122E85271008040A0 /* Main.storyboard in Resources */,
+				190A023E2488A6DF003CD799 /* main.mp4 in Resources */,
 				19C3EEBA247BAC8800FB4A24 /* videoh265.mp4 in Resources */,
 				19ED51A624765D85001D1715 /* video222.mp4 in Resources */,
 				19BF9D3822E85FB4008040A0 /* video.mp4 in Resources */,

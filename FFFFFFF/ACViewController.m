@@ -33,10 +33,12 @@
     [super viewDidLoad];
     self.viewModel = [ACViewModel new];
     self.viewModel.delegate = self;
-    NSString *videoUrl = @"https://img.tukuppt.com/video_show/3670116/00/02/03/5b4f40c2b2fa3.mp4";//[[NSBundle mainBundle] pathForResource:@"videoh265" ofType:@"mp4"];@"https://img.tukuppt.com/video_show/3670116/00/02/03/5b4f40c2b2fa3.mp4";//
+    NSString *videoUrl = [[NSBundle mainBundle] pathForResource:@"1591344158121590" ofType:@"mp4"];//@"https://img.tukuppt.com/video_show/3670116/00/02/03/5b4f40c2b2fa3.mp4";//[[NSBundle mainBundle] pathForResource:@"videoh265" ofType:@"mp4"];@"https://img.tukuppt.com/video_show/3670116/00/02/03/5b4f40c2b2fa3.mp4";//
 //    NSString *videoUrl = @"http://ok.renzuida.com/2002/YW4：完结篇.HD1280高清粤语中字版.mp4";
 //    videoUrl = @"rtmp://60.31.193.11:9508/live/1000264_1_1";//@"rtmp://58.200.131.2:1935/livetv/hunantv";//@"live://60.31.193.11:9502?token=1860412462";//
 //    videoUrl = @"rtmp://192.168.19.90:1935/live/46613724_00000000001311000041_0_0";
+//    videoUrl = @"https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8";
+//    videoUrl = @"https://www.lwavn.club/ycs-test/265test/playlist.m3u8";
     [self.view addSubview:self.playImageView];
     [self.playImageView addSubview:self.timeLabel];
     [self.playImageView addSubview:self.durationLabel];

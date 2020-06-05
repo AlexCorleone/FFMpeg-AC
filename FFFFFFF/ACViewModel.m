@@ -49,8 +49,6 @@
     int result;
     int frameCount;
     
-    NSTimeInterval _videoTime;
-    NSTimeInterval _audioTime;
     NSTimeInterval _videoPlayTime;
     NSTimeInterval _audioPlayTime;
 }
@@ -153,6 +151,7 @@
     avcodec_flush_buffers(videoCodecContext);
     av_seek_frame(formatContext, audio_stream_index, (time.floatValue * audioStream->time_base.den / (videoStream->time_base.num)), AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(audioCodecContext);
+//    avformat_seek_file(<#AVFormatContext *s#>, <#int stream_index#>, <#int64_t min_ts#>, <#int64_t ts#>, <#int64_t max_ts#>, <#int flags#>)
 }
 
 - (void)clearVideoData {
@@ -193,12 +192,15 @@
     }
     NSLog(@"打开资源文件");
     /**********   ************/
-    result = avformat_find_stream_info(formatContext, &options);
+    AVDictionary **infoOptions;
+    infoOptions = alloca(formatContext->nb_streams * sizeof(*infoOptions));
+    result = avformat_find_stream_info(formatContext, NULL);
     if (result < 0) {
         AC_FFmpeg_Logs("find stream info error!!!", result)
         return ;
     }
     NSLog(@"获取到 视频文件信息");
+    av_dump_format(formatContext, 0, fileUrl, 0);
 }
 
 - (void)initVideoDecoder {
@@ -211,8 +213,6 @@
         if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             video_stream_index = i;
             AVStream *stream = formatContext->streams[video_stream_index];
-            _videoTime = (NSTimeInterval)(stream->duration * stream->time_base.num / (stream->time_base.den));
-            NSLog(@"videoStreamInfo videoTime:%lf duration: %lld time_base.num: %d stream->time_base.den: %d", _videoTime, stream->duration, stream->time_base.num, stream->time_base.den);
         }
     }
     NSLog(@"video_stream_index: %d", video_stream_index);
@@ -262,8 +262,6 @@
         if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             audio_stream_index = i;
             AVStream *stream = formatContext->streams[audio_stream_index];
-            _audioTime = (NSTimeInterval)(stream->duration * stream->time_base.num / (stream->time_base.den));
-            NSLog(@"audioStreamInfo audioTime:%lf duration: %lld time_base.num: %d stream->time_base.den: %d", _audioTime, stream->duration, stream->time_base.num, stream->time_base.den);
         }
     }
     NSLog(@"audio_stream_index: %d", audio_stream_index);
@@ -616,7 +614,8 @@ codecSendError:
 }
 
 - (NSTimeInterval)duration {
-    return (int)(_videoTime > _audioTime ? _videoTime : _audioTime);
+    
+    return (int)formatContext->duration / AV_TIME_BASE;
 }
 
 - (NSTimeInterval)playTime {
