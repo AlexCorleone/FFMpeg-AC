@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "ACRenderHelper.h"
+#import "ACOpenGLRenderView.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol ACViewModelDelegate <NSObject>
@@ -21,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ACViewModel : NSObject
 
+/** <#注释#> */
+@property (nonatomic, strong) ACOpenGLRenderView *playerView;
 /**  */
 @property (nonatomic,strong) ACRenderHelper *renderHelper;
 /**  */

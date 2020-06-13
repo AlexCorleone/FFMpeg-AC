@@ -52,10 +52,11 @@
     NSTimeInterval _videoPlayTime;
     NSTimeInterval _audioPlayTime;
 }
+
 /** 视频资源URL */
 @property (nonatomic, copy) NSString *videoUrl;
 /** 解码音视频的子线程  */
-@property (nonatomic,strong) NSThread *threadImageDecompr;
+@property (nonatomic,strong) NSThread *imageDecomprThread;
 /**  */
 @property (nonatomic, strong) dispatch_semaphore_t imageDecomprSemaphore;
 /** 屏幕刷新 displayLink */
@@ -98,20 +99,20 @@
     if (!self.videoUrl || self.videoUrl.length == 0) {
         return;
     }
-    [self performSelector:@selector(initVideoDecodeConfig) onThread:self.threadImageDecompr withObject:nil waitUntilDone:YES];
-    [self performSelector:@selector(playOnThread) onThread:self.threadImageDecompr withObject:nil waitUntilDone:YES];
+    [self performSelector:@selector(initVideoDecodeConfig) onThread:self.imageDecomprThread withObject:nil waitUntilDone:YES];
+    [self performSelector:@selector(playOnThread) onThread:self.imageDecomprThread withObject:nil waitUntilDone:YES];
 }
 
 - (void)play {
-    [self performSelector:@selector(playOnThread) onThread:self.threadImageDecompr withObject:nil waitUntilDone:YES];
+    [self performSelector:@selector(playOnThread) onThread:self.imageDecomprThread withObject:nil waitUntilDone:YES];
 }
 
 - (void)pause {
-    [self performSelector:@selector(pauseOnThread) onThread:self.threadImageDecompr withObject:nil waitUntilDone:YES];
+    [self performSelector:@selector(pauseOnThread) onThread:self.imageDecomprThread withObject:nil waitUntilDone:YES];
 }
 
 - (void)seekWithTime:(NSTimeInterval)time {
-    [self performSelector:@selector(seekOnThreadWithTime:) onThread:self.threadImageDecompr withObject:@(time) waitUntilDone:YES];
+    [self performSelector:@selector(seekOnThreadWithTime:) onThread:self.imageDecomprThread withObject:@(time) waitUntilDone:YES];
 }
 
 #pragma mark - Private
@@ -145,12 +146,17 @@
     _videoPlayTime = time.floatValue;
     _audioPlayTime = time.floatValue;
     self.isSeeking = YES;
-    AVStream *videoStream = formatContext->streams[video_stream_index];
-    AVStream *audioStream = formatContext->streams[audio_stream_index];
-    av_seek_frame(formatContext, video_stream_index, (time.floatValue * videoStream->time_base.den / (videoStream->time_base.num)), AVSEEK_FLAG_BACKWARD);
-    avcodec_flush_buffers(videoCodecContext);
-    av_seek_frame(formatContext, audio_stream_index, (time.floatValue * audioStream->time_base.den / (videoStream->time_base.num)), AVSEEK_FLAG_BACKWARD);
-    avcodec_flush_buffers(audioCodecContext);
+    if (video_stream_index != -1) {
+        AVStream *videoStream = formatContext->streams[video_stream_index];
+        av_seek_frame(formatContext, video_stream_index, (time.floatValue * videoStream->time_base.den / (videoStream->time_base.num)), AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(videoCodecContext);
+    }
+    if (audio_stream_index != -1) {
+        AVStream *audioStream = formatContext->streams[audio_stream_index];
+        av_seek_frame(formatContext, audio_stream_index, (time.floatValue * audioStream->time_base.den / (audioStream->time_base.num)), AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(audioCodecContext);
+    }
+
 //    avformat_seek_file(<#AVFormatContext *s#>, <#int stream_index#>, <#int64_t min_ts#>, <#int64_t ts#>, <#int64_t max_ts#>, <#int flags#>)
 }
 
@@ -353,7 +359,9 @@
                     return;
                 }
             }
-            [self videoImageWithFrame:pFrameRGBA];
+            [self.playerView renderViewWith:pFrameRGBA];
+            self.playerView.bounds = CGRectMake(0, 0, pFrameRGBA->width, pFrameRGBA->height);
+//            [self videoImageWithFrame:pFrameRGBA];
             {
                 //            if (videoCodecContext->pix_fmt == AV_PIX_FMT_YUV420P) {
                 //            }
@@ -527,8 +535,6 @@ outputCondationLabel:
 codecSendError:
     av_packet_unref(packet);
 
-    
-    
     //    result = avformat_find_stream_info(formatContext, NULL);
     //    if (result < 0) {
     //        NSLog(@"find stream info error!!!%s", av_err2str(result));
@@ -591,19 +597,21 @@ codecSendError:
 }
 
 - (void)threadInitAction:(NSObject *)object {
-    [[NSRunLoop currentRunLoop] addPort:[NSPort port] forMode:NSRunLoopCommonModes];
-    [[NSRunLoop currentRunLoop] run];
+    @autoreleasepool {
+        [[NSRunLoop currentRunLoop] addPort:[NSPort port] forMode:NSRunLoopCommonModes];
+        [[NSRunLoop currentRunLoop] run];
+    }
 }
 
 #pragma mark - Setter && Getter
 
-- (NSThread *)threadImageDecompr {
-    if (!_threadImageDecompr) {
-        self.threadImageDecompr = [[NSThread alloc] initWithTarget:self selector:@selector(threadInitAction:) object:nil];
-        _threadImageDecompr.name = @"Alex.DecompressImageThread";
-        [_threadImageDecompr start];
+- (NSThread *)imageDecomprThread {
+    if (!_imageDecomprThread) {
+        self.imageDecomprThread = [[NSThread alloc] initWithTarget:self selector:@selector(threadInitAction:) object:nil];
+        _imageDecomprThread.name = @"Alex.DecompressImageThread";
+        [_imageDecomprThread start];
     }
-    return _threadImageDecompr;
+    return _imageDecomprThread;
 }
 
 - (dispatch_semaphore_t)imageDecomprSemaphore {
@@ -620,6 +628,13 @@ codecSendError:
 
 - (NSTimeInterval)playTime {
     return (int)(_videoPlayTime > _audioPlayTime ? _videoPlayTime : _audioPlayTime);
+}
+
+- (ACOpenGLRenderView *)playerView {
+    if (!_playerView) {
+        self.playerView = [[ACOpenGLRenderView alloc] initWithFrame:CGRectZero];
+    }
+    return _playerView;
 }
 
 @end
